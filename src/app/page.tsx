@@ -7,7 +7,7 @@ import "./Home.css";
 
 export default function Home() {
   const userId = "12345";
-  const backendUrl = "http://localhost:8080/voice-session";
+  const backendUrl = `${process.env.NEXT_PUBLIC_BACKEND_URL+"/voice-session"}`;
 
   const { isRecording, audioURL, startRecording, stopRecording } = useRecorder({
     userId,
@@ -16,24 +16,25 @@ export default function Home() {
 
   const { isSpeaking } = voiceDetected();
   const [isPlayingResponse, setIsPlayingResponse] = useState(false);
-  const [hasPlayedResponse, setHasPlayedResponse] = useState(false);
   const [isProcessingResponse, setIsProcessingResponse] = useState(false);
 
   const hasUserSpoken = useRef(false);
 
   // 🎤 Control de grabación
   useEffect(() => {
-    const canRecord = !isPlayingResponse && !isProcessingResponse;
-
-    if (!canRecord) {
+    // 🚫 Bloquear grabación si se procesa respuesta o se reproduce audio
+    if (isProcessingResponse || isPlayingResponse) {
       if (isRecording) stopRecording();
       return;
     }
 
+    // Iniciar grabación solo si no estaba grabando
     if (!isRecording) startRecording();
 
+    // Detecta cuando el usuario habla
     if (isSpeaking && isRecording) hasUserSpoken.current = true;
 
+    // Si el usuario deja de hablar, detener grabación y procesar
     if (!isSpeaking && isRecording && hasUserSpoken.current) {
       stopRecording();
       hasUserSpoken.current = false;
@@ -41,36 +42,37 @@ export default function Home() {
     }
   }, [isSpeaking, isRecording, isPlayingResponse, isProcessingResponse, startRecording, stopRecording]);
 
-  // ▶️ Reproducción de respuesta optimizada
+  // ▶️ Reproducción de respuesta
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
-    if (!audioRef.current) {
-      audioRef.current = new Audio();
-    }
+    if (!audioRef.current) audioRef.current = new Audio();
   }, []);
 
   useEffect(() => {
-    if (!audioURL || !audioRef.current) return;
+    if (!audioURL || !audioRef.current) {
+      // Si no hay audio pero estaba procesando, desbloquear estado
+      if (isProcessingResponse) setIsProcessingResponse(false);
+      return;
+    }
 
     const audioEl = audioRef.current;
-
-    // Pausar cualquier audio previo y reiniciar
     audioEl.pause();
     audioEl.currentTime = 0;
     audioEl.src = audioURL;
 
-    const handlePlay = () => setIsProcessingResponse(false);
+    const handlePlay = () => {
+      setIsProcessingResponse(false);
+      setIsPlayingResponse(true);
+    };
+
     const handleEnded = () => {
       setIsPlayingResponse(false);
-      setHasPlayedResponse(true);
     };
+
     const handleError = () => {
-      setTimeout(() => {
-        setIsPlayingResponse(false);
-        setHasPlayedResponse(true);
-        setIsProcessingResponse(false);
-      }, 2000);
+      setIsPlayingResponse(false);
+      setIsProcessingResponse(false);
     };
 
     audioEl.addEventListener("play", handlePlay);
