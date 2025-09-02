@@ -1,0 +1,159 @@
+/* Fondo general */
+.home-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    background: radial-gradient(circle at center, #0a0a0a 0%, #000000 100%);
+    color: #e5e5e5;
+    font-family: "Helvetica Neue", "Inter", Arial, sans-serif;
+    text-align: center;
+  }
+  
+  /* Núcleo del asistente */
+  .assistant-circle {
+    width: 140px;
+    height: 140px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #1f2937, #111827);
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 2rem;
+    box-shadow: 0 0 30px rgba(0, 200, 255, 0.15);
+    transition: transform 0.5s ease, box-shadow 0.5s ease;
+  }
+  
+  /* Patrón de matriz animado */
+  .assistant-circle::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 200%;
+    height: 200%;
+    background-image: repeating-linear-gradient(
+      0deg,
+      rgba(0, 255, 180, 0.1) 0px,
+      rgba(0, 255, 180, 0.1) 1px,
+      transparent 1px,
+      transparent 20px
+    );
+    transform: rotate(20deg);
+    animation: matrix-move 8s linear infinite;
+  }
+  
+  @keyframes matrix-move {
+    0% {
+      transform: translateY(0) rotate(20deg);
+    }
+    100% {
+      transform: translateY(-50%) rotate(20deg);
+    }
+  }
+  
+  /* Estado hablando */
+  .assistant-speaking {
+    background: linear-gradient(135deg, #00f5ff, #005eff, #00f5ff);
+    background-size: 400% 400%;
+    animation: gradient-shift 6s ease infinite, pulse-glow 1.5s infinite;
+  }
+  
+  @keyframes gradient-shift {
+    0% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+    100% {
+      background-position: 0% 50%;
+    }
+  }
+  
+  @keyframes pulse-glow {
+    0% {
+      box-shadow: 0 0 20px rgba(0, 200, 255, 0.25);
+      transform: scale(1);
+    }
+    50% {
+      box-shadow: 0 0 40px rgba(0, 200, 255, 0.6);
+      transform: scale(1.04);
+    }
+    100% {
+      box-shadow: 0 0 20px rgba(0, 200, 255, 0.25);
+      transform: scale(1);
+    }
+  }
+  
+  /* Texto de estado */
+  .status-text {
+    margin-bottom: 1.5rem;
+    font-size: 1rem;
+    font-weight: 300;
+    color: #9ca3af;
+    letter-spacing: 0.5px;
+  }
+  
+  /* Botón delicado */
+  .record-btn {
+    padding: 0.8rem 2rem;
+    border-radius: 30px;
+    font-size: 1rem;
+    font-weight: 300;
+    border: 1px solid #ccc;
+    background-color: #fff;
+    color: #444;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+    transition: all 0.3s ease;
+  }
+  
+  .record-btn.start {
+    background: #f9f9f9;
+    color: #059669;
+    border: 1px solid #059669;
+  }
+  
+  .record-btn.start:hover {
+    background: #e6f7f2;
+    transform: scale(1.03);
+  }
+  
+  .record-btn.stop {
+    background: #fff5f5;
+    color: #dc2626;
+    border: 1px solid #dc2626;
+  }
+  
+  .record-btn.stop:hover {
+    background: #ffe5e5;
+    transform: scale(1.03);
+  }
+  
+  /* Audio */
+  .audio-container {
+    margin-top: 1.5rem;
+    width: 100%;
+    max-width: 400px;
+  }
+  
+  .audio-player {
+    width: 100%;
+    border-radius: 6px;
+  }
+  
+  /* Tipografías generales */
+  h1, h2, h3 {
+    font-weight: 300;
+    color: #e5e5e5;
+    letter-spacing: 1px;
+  }
+  
+  p {
+    font-weight: 300;
+    line-height: 1.6;
+    color: #aaa;
+  }
+  

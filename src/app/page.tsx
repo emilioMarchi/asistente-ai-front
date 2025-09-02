@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useRecorder } from "../hooks/useRecorder";
 import { voiceDetected } from "@/hooks/voiceDetect";
+import "./Home.css";
 
 export default function Home() {
   const userId = "12345";
@@ -25,55 +26,46 @@ export default function Home() {
     const canRecord = !isPlayingResponse && !isProcessingResponse;
 
     if (!canRecord) {
-      if (isRecording) {
-        console.log("⏸️ Pauso grabación porque está en proceso o reproduciendo respuesta");
-        stopRecording();
-      }
+      if (isRecording) stopRecording();
       return;
     }
 
-    if (!isRecording) {
-      console.log("🎤 Micrófono abierto en modo escucha");
-      startRecording();
-    }
+    if (!isRecording) startRecording();
 
-    if (isSpeaking && isRecording) {
-      hasUserSpoken.current = true;
-    }
+    if (isSpeaking && isRecording) hasUserSpoken.current = true;
 
     if (!isSpeaking && isRecording && hasUserSpoken.current) {
-      console.log("🔇 Usuario terminó de hablar → detengo grabación y proceso mensaje");
       stopRecording();
       hasUserSpoken.current = false;
-
-      // activamos procesamiento hasta que el audio del backend empiece a reproducirse
       setIsProcessingResponse(true);
     }
   }, [isSpeaking, isRecording, isPlayingResponse, isProcessingResponse, startRecording, stopRecording]);
 
-  // ▶️ Reproducción de respuesta
+  // ▶️ Reproducción de respuesta optimizada
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
   useEffect(() => {
-    if (!audioURL) return;
+    if (!audioRef.current) {
+      audioRef.current = new Audio();
+    }
+  }, []);
 
-    // cada vez que llega un nuevo audio → resetear estado
-    setHasPlayedResponse(false);
-    setIsPlayingResponse(true);
+  useEffect(() => {
+    if (!audioURL || !audioRef.current) return;
 
-    const audioEl = new Audio(audioURL);
+    const audioEl = audioRef.current;
 
-    // cuando empieza la reproducción → liberamos procesamiento
-    audioEl.onplay = () => {
-      setIsProcessingResponse(false);
-    };
+    // Pausar cualquier audio previo y reiniciar
+    audioEl.pause();
+    audioEl.currentTime = 0;
+    audioEl.src = audioURL;
 
-    audioEl.onended = () => {
-      console.log("▶️ Audio del backend terminó");
+    const handlePlay = () => setIsProcessingResponse(false);
+    const handleEnded = () => {
       setIsPlayingResponse(false);
       setHasPlayedResponse(true);
     };
-
-    audioEl.onerror = () => {
-      console.log("⚠️ Error de reproducción, simulamos fin");
+    const handleError = () => {
       setTimeout(() => {
         setIsPlayingResponse(false);
         setHasPlayedResponse(true);
@@ -81,33 +73,45 @@ export default function Home() {
       }, 2000);
     };
 
-    audioEl.play().catch(() => audioEl.onerror?.(new Event("error")));
+    audioEl.addEventListener("play", handlePlay);
+    audioEl.addEventListener("ended", handleEnded);
+    audioEl.addEventListener("error", handleError);
+
+    audioEl.play().catch(() => handleError());
+
+    return () => {
+      audioEl.removeEventListener("play", handlePlay);
+      audioEl.removeEventListener("ended", handleEnded);
+      audioEl.removeEventListener("error", handleError);
+      audioEl.pause();
+    };
   }, [audioURL]);
 
-  useEffect(() => {
-    console.log("👂 Sistema listo, esperando al usuario...");
-  }, []);
-
   return (
-    <div className="flex flex-col items-center justify-center h-screen bg-black text-white">
-      <p>
+    <div className="home-container">
+      {/* Objeto del asistente */}
+      <div
+        className={`assistant-circle ${isPlayingResponse ? "assistant-speaking" : ""}`}
+      />
+
+      {/* Estado */}
+      <p className="status-text">
         {isPlayingResponse
-          ? "🟡 Asistente hablando..."
+          ? "Asistente hablando..."
           : isProcessingResponse
-          ? "🔵 Procesando respuesta..."
+          ? "Procesando respuesta..."
           : isRecording
-          ? "🟢 Grabando usuario"
-          : "⚪ En espera"}
+          ? "Grabando usuario"
+          : "En espera"}
       </p>
 
+      {/* Botón */}
       <button
         onClick={isRecording ? stopRecording : startRecording}
-        className={`px-6 py-3 rounded-lg ${isRecording ? "bg-red-600" : "bg-green-600"}`}
+        className={`record-btn ${isRecording ? "stop" : "start"}`}
       >
         {isRecording ? "Detener" : "Grabar"}
       </button>
-
-      {audioURL && <audio controls src={audioURL} className="mt-4" />}
     </div>
   );
 }
