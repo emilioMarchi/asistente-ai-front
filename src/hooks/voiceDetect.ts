@@ -4,37 +4,31 @@ import { MicVAD } from "@ricky0123/vad-web";
 
 export function voiceDetected() {
   const [isSpeaking, setIsSpeaking] = useState(false);
-  const [vadInstance, setVadInstance] = useState<MicVAD | null>(null);
 
   useEffect(() => {
     let mounted = true;
+    let vad: MicVAD | null = null;
 
-    async function initVAD() {
+    (async () => {
       try {
-        const micVAD = await MicVAD.new({
-          onSpeechStart: () => {
-            console.log("🎤 Speech start");
-            if (mounted) setIsSpeaking(true);
-          },
-          onSpeechEnd: () => {
-            console.log("🔇 Speech end");
-            if (mounted) setIsSpeaking(false);
-          },
+        vad = await MicVAD.new({
+          onSpeechStart: () => mounted && setIsSpeaking(true),
+          onSpeechEnd:   () => mounted && setIsSpeaking(false),
+          // Opcional: dispara onSpeechEnd al pausar
+          submitUserSpeechOnPause: true,
+          // Opcional: personalizar cómo pausar/reanudar el stream
+          // pauseStream: async (stream) => stream.getTracks().forEach(t => t.stop()),
+          // resumeStream: async () => navigator.mediaDevices.getUserMedia({ audio: true }),
         });
-        setVadInstance(micVAD);
-        micVAD.start();
+        vad.start();
       } catch (e) {
         console.error("Error initializing VAD:", e);
       }
-    }
-
-    initVAD();
+    })();
 
     return () => {
       mounted = false;
-      if (vadInstance) {
-        vadInstance.stop();
-      }
+      vad?.pause(); // <- en vez de stop()
     };
   }, []);
 
