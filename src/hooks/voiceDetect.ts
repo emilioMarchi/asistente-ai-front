@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { MicVAD } from "@ricky0123/vad-web";
 
-export function voiceDetected() {
+export function useVoiceActivity() {
   const [isSpeaking, setIsSpeaking] = useState(false);
 
   useEffect(() => {
@@ -14,11 +14,7 @@ export function voiceDetected() {
         vad = await MicVAD.new({
           onSpeechStart: () => mounted && setIsSpeaking(true),
           onSpeechEnd:   () => mounted && setIsSpeaking(false),
-          // Opcional: dispara onSpeechEnd al pausar
           submitUserSpeechOnPause: true,
-          // Opcional: personalizar cómo pausar/reanudar el stream
-          // pauseStream: async (stream) => stream.getTracks().forEach(t => t.stop()),
-          // resumeStream: async () => navigator.mediaDevices.getUserMedia({ audio: true }),
         });
         vad.start();
       } catch (e) {
@@ -28,7 +24,7 @@ export function voiceDetected() {
 
     return () => {
       mounted = false;
-      vad?.pause(); // <- en vez de stop()
+      vad?.pause?.(); // en vez de stop()
     };
   }, []);
 

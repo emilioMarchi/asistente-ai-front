@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import { useRecorder } from "../hooks/useRecorder";
-import { voiceDetected } from "@/hooks/voiceDetect";
+import { useVoiceActivity } from "@/hooks/voiceDetect";
 import "./Home.css";
 
 export default function Home() {
@@ -14,7 +14,7 @@ export default function Home() {
     backendUrl,
   });
 
-  const { isSpeaking } = voiceDetected();
+  const { isSpeaking } = useVoiceActivity();
   const [isPlayingResponse, setIsPlayingResponse] = useState(false);
   const [isProcessingResponse, setIsProcessingResponse] = useState(false);
 
