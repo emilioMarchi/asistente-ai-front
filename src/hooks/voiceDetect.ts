@@ -1,9 +1,10 @@
 // useVoiceActivity.ts
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { MicVAD } from "@ricky0123/vad-web";
 
-export function useVoiceActivity() {
+export function useVoiceActivity(silenceDelay: number = 700) {
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const silenceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     let mounted = true;
@@ -12,8 +13,23 @@ export function useVoiceActivity() {
     (async () => {
       try {
         vad = await MicVAD.new({
-          onSpeechStart: () => mounted && setIsSpeaking(true),
-          onSpeechEnd:   () => mounted && setIsSpeaking(false),
+          onSpeechStart: () => {
+            if (!mounted) return;
+            // si estaba esperando cortar, cancelamos
+            if (silenceTimeoutRef.current) {
+              clearTimeout(silenceTimeoutRef.current);
+              silenceTimeoutRef.current = null;
+            }
+            setIsSpeaking(true);
+          },
+          onSpeechEnd: () => {
+            if (!mounted) return;
+            // esperamos un poco antes de marcar false
+            silenceTimeoutRef.current = setTimeout(() => {
+              if (mounted) setIsSpeaking(false);
+              silenceTimeoutRef.current = null;
+            }, silenceDelay);
+          },
           submitUserSpeechOnPause: true,
         });
         vad.start();
@@ -24,9 +40,12 @@ export function useVoiceActivity() {
 
     return () => {
       mounted = false;
-      vad?.pause?.(); // en vez de stop()
+      vad?.pause?.();
+      if (silenceTimeoutRef.current) {
+        clearTimeout(silenceTimeoutRef.current);
+      }
     };
-  }, []);
+  }, [silenceDelay]);
 
   return { isSpeaking };
 }

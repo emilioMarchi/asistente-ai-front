@@ -88,7 +88,7 @@ export function useRecorder({ userId, backendUrl }: UseRecorderOptions) {
         tempAudio.src = URL.createObjectURL(blob);
 
         tempAudio.onloadedmetadata = () => {
-          if (!tempAudio.duration || tempAudio.duration < 0.8) {
+          if (!tempAudio.duration || tempAudio.duration < 0.2) {
             console.log("⚠️ Audio demasiado corto o vacío → no se envía");
             isProcessingRef.current = false; // 🔑 desbloquear flujo
             return;
